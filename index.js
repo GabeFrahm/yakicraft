@@ -68,7 +68,12 @@ client.on('interactionCreate', async interaction => {
 	if (commandName === 'status') {
 		await interaction.reply('' + isOnline);
 	} else if (commandName === 'whitelist') {
-		await interaction.reply('TODO');
+		// MAKE THIS INTO A FUNCTION
+		// check to see if user id is in whitelist dictionary
+		// if so: show current user and ask if want to override
+		// write json
+		// add to whitelist
+		await interaction.reply('' + interaction.user.id);
 	}
 });
 
