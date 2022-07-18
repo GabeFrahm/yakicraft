@@ -1,4 +1,4 @@
-const { Client, Intents } = require('discord.js');
+const { Client, Intents, MessageEmbed } = require('discord.js');
 const {token, rconPass, rconIP, rconPort, serverIP, updateInterval} = require('./config.json');
 const Rcon = require('modern-rcon');
 const fs = require('fs');
@@ -47,42 +47,49 @@ async function user(user) {
 	return [responsejson.name, responsejson.id]
 }
 
-
 function whitelist(arg, username, userid) {
+	let curuser = null;
 	if (users.has(userid)) {
 		user(users.get(userid)).then(
 			(value) => {
-				rcon.send(`whitelist remove ${value[0]}`).then(
-					(error) => {
-						return("Issue communicating with server! (I blame Ruby)");
-					}
-				);
+				curuser = value;
 			},
+			(error) => {
+				return ('Issue communicating with minetools! Try again later!');
+			}
 		);
-		users.delete(userid);
 	}
 
 	if (arg === 'add') {
-		rcon.send(`whitelist add ${username}`).then(
-			(error) => {
-				return("Issue communicating with server! (I blame Ruby)")
-			}
-		);
+		if (curuser) {
+				console.log('TODO');
+				// TODO ask about override
+		}
 
 		user(username).then(
 			(value) => {
 				users.set(userid, value[1]);
-				console.log(users);
 			},
 			(error) => {
 				return("That user doesn't exist!");
 			}
 		)
 
-		return(`Successfully added user ${username} to the whitelist!`)
+    rcon.connect().then(
+      (value) => {
+				console.log("VALUE " + value);
+				rcon.send(`whitelist add ${username}`);
+				rcon.disconnect();
+				return(`Successfully added user ${username} to the whitelist!`)
+			},
+      (error) => {
+				return (`There was an issue communicating with ${serverIP}`);
+      }
+		)
 	}
-
-	return('Successfully removed your user from the whitelist');
+	else {
+		return(`Successfully removed ${curuser[0]} from the whitelist`);
+	}
 }
 
 // Discord Bot
@@ -114,7 +121,6 @@ function setPresence() {
 
 client.once('ready', () => {
 	console.log('Ready!');
-	rcon.connect();
 	setPresence();
 });
 
@@ -126,14 +132,22 @@ client.on('interactionCreate', async interaction => {
 	if (commandName === 'status') {
 		serverStatus(serverIP).then(
 			(value) => {
-				interaction.reply(`${serverIP}\nStatus: Online 🟢\nPlayers: ${value[1]}/${value[2]}`);
+							const embed = new MessageEmbed()
+								.setColor('#12D900')
+								.setTitle(serverIP)
+								.setDescription(`Status: Online 🟢\nPlayers: ${value[1]}/${value[2]}`);
+				interaction.reply({ embeds: [embed] });
 			},
 			(error) => {
-				interaction.reply(`${serverIP}\nStatus: Offline 🔴`);
+							const embed = new MessageEmbed()
+								.setColor('#FF0000')
+								.setTitle(serverIP)
+								.setDescription(`Status: Offline 🔴`);
+				interaction.reply({ embeds: [embed] });
 			},
 		)
 	} else if (commandName === 'whitelist') {
-		await interaction.reply(whitelist(options.getSubcommand(), options.getString('username'), interaction.user.id));
+		interaction.reply(await whitelist(options.getSubcommand(), options.getString('username'), interaction.user.id));
 		writeJson(users);
 	}
 });
