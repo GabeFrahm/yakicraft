@@ -48,48 +48,39 @@ async function user(user) {
 }
 
 function whitelist(arg, username, userid) {
-	let curuser = null;
 	if (users.has(userid)) {
 		user(users.get(userid)).then(
 			(value) => {
-				curuser = value;
+				rcon.send(`whitelist remove ${value[0]}`).then(
+					(error) => {
+						return("Issue communicating with server! (I blame Ruby)");
+					}
+				);
 			},
-			(error) => {
-				return ('Issue communicating with minetools! Try again later!');
-			}
 		);
+		users.delete(userid);
 	}
 
 	if (arg === 'add') {
-		if (curuser) {
-				console.log('TODO');
-				// TODO ask about override
-		}
+		rcon.send(`whitelist add ${username}`).then(
+			(error) => {
+				return("Issue communicating with server! (I blame Ruby)")
+			}
+		);
 
 		user(username).then(
 			(value) => {
 				users.set(userid, value[1]);
+				console.log(users);
 			},
 			(error) => {
 				return("That user doesn't exist!");
 			}
 		)
+		return(`Successfully added user ${username} to the whitelist!`)
+	}
 
-    rcon.connect().then(
-      (value) => {
-				console.log("VALUE " + value);
-				rcon.send(`whitelist add ${username}`);
-				rcon.disconnect();
-				return(`Successfully added user ${username} to the whitelist!`)
-			},
-      (error) => {
-				return (`There was an issue communicating with ${serverIP}`);
-      }
-		)
-	}
-	else {
-		return(`Successfully removed ${curuser[0]} from the whitelist`);
-	}
+	return('Successfully removed your user from the whitelist');
 }
 
 // Discord Bot
