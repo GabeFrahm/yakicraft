@@ -47,27 +47,21 @@ async function user(user) {
 	return [responsejson.name, responsejson.id]
 }
 
-function whitelist(arg, username, userid) {
+async function whitelist(arg, username, userid) {
+	let curuser = null;
+
+	// STEP 1
 	if (users.has(userid)) {
 		user(users.get(userid)).then(
 			(value) => {
-				rcon.send(`whitelist remove ${value[0]}`).then(
-					(error) => {
-						return("Issue communicating with server! (I blame Ruby)");
-					}
-				);
-			},
+				curuser = value[0];
+			}
 		);
-		users.delete(userid);
 	}
 
 	if (arg === 'add') {
-		rcon.send(`whitelist add ${username}`).then(
-			(error) => {
-				return("Issue communicating with server! (I blame Ruby)")
-			}
-		);
 
+		// STEP 2
 		user(username).then(
 			(value) => {
 				users.set(userid, value[1]);
@@ -77,10 +71,25 @@ function whitelist(arg, username, userid) {
 				return("That user doesn't exist!");
 			}
 		)
+
+		// STEP 3
+		rcon.connect().then(
+			(value) => {
+				rcon.send(`whitelist add ${username}`);
+			},
+			(error) => {
+						return("Issue communicating with server! (I blame Ruby)");
+			}
+		);
 		return(`Successfully added user ${username} to the whitelist!`)
 	}
 
-	return('Successfully removed your user from the whitelist');
+	if(!curuser) {
+		return("You don't have a user assigned to remove!")
+	}
+
+	users.delete(userid);
+	return(`Successfully removed ${curuser} from the whitelist`);
 }
 
 // Discord Bot
