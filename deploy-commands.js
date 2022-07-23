@@ -15,6 +15,11 @@ const commands = [
 						.setDescription('username to be whitelisted')
 						.setRequired(true)
 				)
+				.addBooleanOption(option2 =>
+					option2.setName('bedrock')
+						.setDescription('bedrock user?')
+						.setRequired(true)
+				)
 		)
 		.addSubcommand(option =>
 			option.setName('remove')
@@ -27,22 +32,22 @@ const commands = [
 
 	new SlashCommandBuilder()
 		.setName('user')
-		.setDescription('get the mc username associated with a Yakicord user or vice versa')
+		.setDescription('get the Minecraft username associated with a Discord user or vice versa')
 		.addSubcommand(option =>
-			option.setName('yakicord')
-				.setDescription('Get mc user associated with a Yakicord user')
+			option.setName('discord')
+				.setDescription('Get Minecraft user associated with a Discord user')
 				.addUserOption(option2 =>
 					option2.setName('user')
-						.setDescription('Yakicord user')
+						.setDescription('Discord user')
 						.setRequired(true)
 				)
 		)
 		.addSubcommand(option =>
-			option.setName('mc')
-				.setDescription('Get Yakicord user associated with an mc user')
+			option.setName('minecraft')
+				.setDescription('Get Discord user associated with a Minecraft user')
 				.addStringOption(option2 =>
 					option2.setName('username')
-						.setDescription('mc user')
+						.setDescription('Minecraft user')
 						.setRequired(true)
 				)
 		)

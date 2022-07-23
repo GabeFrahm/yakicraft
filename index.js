@@ -4,6 +4,11 @@ const async = require('async');
 const Rcon = require('modern-rcon');
 const fs = require('fs');
 
+// TODOs
+// TODO: add Geyser/Floodgate support
+// TODO: comment and optimise code
+
+
 let isOnline = false;
 let users = readJson();
 
@@ -54,9 +59,12 @@ async function getUser(user) {
 	return [responsejson.name, responsejson.id]
 }
 
-async function whitelist(arg, username, userID){
-	// NOTE: users is an object full of Discord User IDs paired with Minecraft UUIDs
+// Bedrock api calls
+async function getBedUser(user) {
+	//TODO
+}
 
+async function whitelist(arg, username, userID, bedrock){
 	// STEP 1: Get current user if it exists
 	let message = new Promise((resolve, reject) => {
 		let curuser = null;
@@ -87,33 +95,51 @@ async function whitelist(arg, username, userID){
 
 				else if (arg === 'add') {
 					let user = null;
-					getUser(username).then(
-						(value) => {
-							user = value;
-							if (Array.from(users.values()).indexOf(user[1]) != -1) {
-								resolve('That user is already on the whitelist!');
+					// JAVA USER
+					if (!bedrock) {
+						getUser(username).then(
+							(value) => {
+								user = value;
+								let arr = Array.from(users.values()).filter( (el) => {
+									return !!~el.indexOf( user[1] );
+								});
+
+								if (arr.length != 0 && arr[0] === 'Java') {
+									resolve('That user is already on the whitelist!');
+									exit = true;
+								}
+								else {
+									if (curuser) {
+										users.delete(userID);
+										getUser(curuser[1]).then(
+											(value) => {
+												// REMOVING JAVA USER
+												rcon.send(`whitelist remove ${value[0]}`);
+											},
+											(err) => {
+												// REMOVING BEDROCK USER
+												rcon.send(`fwhitelist remove ${value[0]}`);
+											}
+										);
+									}
+
+									// ADDING JAVA USER
+									rcon.send(`whitelist add ${user[0]}`);
+									users.set(userID, ['Java', user[1]]);
+									resolve(`Successfully added ${user[0]} to the whitelist`);
+
+									callback();
+								}
+							},
+							(error) => {
+								resolve('That user doesn\'t exist!');
 								exit = true;
 							}
-							else {
-								if (curuser) {
-									users.delete(userID);
-									getUser(curuser).then(
-										(value) => {
-											rcon.send(`whitelist remove ${value[0]}`);
-										}
-									);
-								}
-								rcon.send(`whitelist add ${user[0]}`);
-								users.set(userID, user[1]);
-								resolve(`Successfully added ${user[0]} to the whitelist`);
-								callback();
-							}
-						},
-						(error) => {
-							resolve('That user doesn\'t exist!');
-							exit = true;
-						}
-					);
+						);
+					} else {
+						// ADDING BEDROCK USER
+						// TODO
+					}
 				}
 				else {callback();}
 			},
@@ -123,14 +149,21 @@ async function whitelist(arg, username, userID){
 				if (exit) {callback();}
 				else if (arg === 'remove') {
 					if (curuser) {
-						getUser(curuser).then(
-							(value) => {
-								rcon.send(`whitelist remove ${value[0]}`);
-								resolve(`Removed ${value[0]} from the whitelist.`);
-								users.delete(userID);
-								callback();
-							}
-						);
+						// JAVA REMOVE
+						if (curuser[0] === 'Java') {
+							getUser(curuser[1]).then(
+								(value) => {
+									rcon.send(`whitelist remove ${value[0]}`);
+									resolve(`Removed ${value[0]} from the whitelist.`);
+									users.delete(userID);
+									callback();
+								}
+							);
+						}
+						// BEDROCK REMOVE
+						else {
+							// TODO get bedrock user then mirror method above
+						}
 					}
 					else {
 						resolve('You don\'t have a user whitelisted!');
@@ -147,23 +180,31 @@ async function whitelist(arg, username, userID){
 	return(message);
 }
 
+// DOESN'T WORK
 async function mcQuery(mcUser) {
 	let promise = new Promise((resolve, reject) => {
 		let mcUsers = Array.from(users.values());
 		getUser(mcUser).then(
 			(value) => {
-				let index = mcUsers.indexOf(value[1]); 
-				if (index >= 0) {
-					// holy one liner! returns discord user
-					client.users.fetch(Array.from(users.keys())[index]).then(
-						(value) => { resolve(`${value} is ${mcUser}`); }
+				let arr = Array.from(users.values()).filter( (el) => {
+					return !!~el.indexOf( value[1] );
+				});
+				if (arr.length > 0) {
+					// holy one liner batman! returns discord user
+					client.users.fetch([...users.entries()]
+						.filter(({1:v}) => v === arr)
+						.map(([k]) => k)
+					[0]).then(
+						(value) => { resolve(`${value} is Java user ${mcUser}`); }
 					);
 				}
 				else {
+					// CHECK BEDROCK FIRST
 					resolve('That user isn\'t on the whitelist!');
 				}
 			},
 			(error) => {
+				// GET BEDROCK USER
 				resolve('That user doesn\'t exist');
 			}
 		)
@@ -176,8 +217,8 @@ async function userQuery(discordUser) {
 	let promise = new Promise((resolve, reject) => {
 		let mcUUID = users.get(discordUser.id);
 		if (mcUUID) {
-			getUser(mcUUID).then(
-				(value) => {resolve(`${(value[0])} is ${discordUser}`);}
+			getUser(mcUUID[1]).then(
+				(value) => {resolve(`${mcUUID[0]} user ${(value[0])} is ${discordUser}`);}
 			)
 		}
 		else {
@@ -248,7 +289,7 @@ client.on('interactionCreate', async interaction => {
 		)
 	} else if (commandName === 'whitelist') {
 		await interaction.deferReply();
-		whitelist(options.getSubcommand(), options.getString('username'), interaction.user.id).then(
+		whitelist(options.getSubcommand(), options.getString('username'), interaction.user.id, options.getBoolean('bedrock')).then(
 			(value) => {interaction.editReply(value);}
 		)
 		.then(
@@ -256,7 +297,7 @@ client.on('interactionCreate', async interaction => {
 		);
 	} else if (commandName === 'user') {
 		if (options.getSubcommand() === 'mc') {
-			await interaction.deferReply();
+			await interaction.deferReply({ ephemeral: true });
 			mcQuery(options.getString('username')).then(
 				(value) => {
 					interaction.editReply({content: value, ephemeral: true });
@@ -264,7 +305,7 @@ client.on('interactionCreate', async interaction => {
 			)
 		}
 		else {
-			await interaction.deferReply();
+			await interaction.deferReply({ ephemeral: true });
 			userQuery(options.getUser('user')).then(
 				(value) => {
 					interaction.editReply({content: value, ephemeral: true });
