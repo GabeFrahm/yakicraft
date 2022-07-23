@@ -21,7 +21,31 @@ const commands = [
 				.setDescription('Remove your user from the whitelist')
 		),
 		
-	new SlashCommandBuilder().setName('status').setDescription('get server status and player count')
+	new SlashCommandBuilder()
+		.setName('status')
+		.setDescription('get server status and player count'),
+
+	new SlashCommandBuilder()
+		.setName('user')
+		.setDescription('get the mc username associated with a Yakicord user or vice versa')
+		.addSubcommand(option =>
+			option.setName('yakicord')
+				.setDescription('Get mc user associated with a Yakicord user')
+				.addUserOption(option2 =>
+					option2.setName('user')
+						.setDescription('Yakicord user')
+						.setRequired(true)
+				)
+		)
+		.addSubcommand(option =>
+			option.setName('mc')
+				.setDescription('Get Yakicord user associated with an mc user')
+				.addStringOption(option2 =>
+					option2.setName('username')
+						.setDescription('mc user')
+						.setRequired(true)
+				)
+		)
 ]
 
 	.map(command => command.toJSON());
