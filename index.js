@@ -86,10 +86,24 @@ async function getBedXuid(gamertag) {
 	}
 }
 
+function xuidToFloodUUID(xuid){
+	// Floodgate UUIDs are slightly different than Xbox XUIDs...
+	// number to hex
+	let hexuser = Number(xuid).toString(16);
+
+	// pad to 16 characters
+	hexuser = hexuser.padStart(16, '0');
+
+	// Finally, Floodgate UUID formatting
+	hexuser = `00000000-0000-0000-${hexuser.substring(0,4)}-${hexuser.substring(4)}`;
+	return hexuser;
+}
+
 async function whitelist(arg, username, userID, bedrock){
 	// STEP 1: Get current user if it exists
 	let message = new Promise((resolve, reject) => {
 		let curuser = null;
+		let user = null;
 		if (users.has(userID)) {
 			curuser = users.get(userID);
 		}
@@ -111,12 +125,10 @@ async function whitelist(arg, username, userID, bedrock){
 			},
 
 			function(callback) {
-				// STEP 3: If arg == add, remove current user and add the new user. DO NOT DO
-				// THESE THINGS IF THE USER IS ALREADY ON THE WHITELIST
+				// prepare to add
 				if (exit) {callback();}
 
 				else if (arg === 'add') {
-					let user = null;
 					// JAVA USER
 					if (!bedrock) {
 						getUser(username).then(
@@ -136,26 +148,25 @@ async function whitelist(arg, username, userID, bedrock){
 										getUser(curuser[1]).then(
 											(value) => {
 												// REMOVING JAVA USER
-												rcon.send(`whitelist remove ${value[0]}`);
+												rcon.send(`whitelist remove ${value[0]}`).then(
+													(value) => {callback();}
+												);
 											},
 											(err) => {
 												// REMOVING BEDROCK USER
-												rcon.send(`fwhitelist remove ${value[0]}`);
+												rcon.send(`fwhitelist remove ${xuidToFloodUUID(curuser[1])}`).then(
+													() => {callback();}
+												);
 											}
 										);
 									}
-
-									// ADDING JAVA USER
-									rcon.send(`whitelist add ${user[0]}`);
-									users.set(userID, ['Java', user[1]]);
-									resolve(`Successfully added ${user[0]} to the whitelist`);
-
-									callback();
+									else {callback();}
 								}
 							},
 							(error) => {
 								resolve('That user doesn\'t exist!');
 								exit = true;
+								callback();
 							}
 						);
 					} else {
@@ -169,6 +180,7 @@ async function whitelist(arg, username, userID, bedrock){
 								if (arr.length != 0 && arr[0] === 'Bedrock') {
 									resolve('That user is already on the whitelist!');
 									exit = true;
+									callback();
 								}
 								else {
 									if (curuser) {
@@ -176,27 +188,50 @@ async function whitelist(arg, username, userID, bedrock){
 										getUser(curuser[1]).then(
 											(value) => {
 												// REMOVING JAVA USER
-												rcon.send(`whitelist remove ${value[0]}`);
+												rcon.send(`whitelist remove ${value[0]}`).then(
+													(value) => {callback();}
+												);
 											},
 											(err) => {
 												// REMOVING BEDROCK USER
-												rcon.send(`fwhitelist remove ${value[0]}`);
+												rcon.send(`fwhitelist remove ${xuidToFloodUUID(curuser[1])}`).then(
+													(value) => {callback();}
+												);
 											}
 										);
 									}
-
-									// ADDING BEDROCK USER
-									rcon.send(`fwhitelist add ${username}`);
-									users.set(userID, ['Bedrock', user]);
-									resolve(`Successfully added ${username} to the whitelist`);
-									callback();
+									else {callback();}
+								}
 							},
 							(err) => {
 								resolve('That user doesn\'t exist!');
 								exit = true;
+								callback();
 							}
 						)
 					}
+				}
+				else {callback();}
+			},
+
+			function(callback) {
+				// add new user
+				if (exit) {callback();}
+				if (arg === 'add') {
+					if (bedrock) {
+						// ADDING BEDROCK USER
+						// Floodgate UUIDs are slightly different than Xbox XUIDs...
+						rcon.send(`fwhitelist add ${xuidToFloodUUID(user)}`);
+						users.set(userID, ['Bedrock', user]);
+						resolve(`Successfully added ${username} to the whitelist`);
+					}
+					else {
+						// ADDING JAVA USER
+						rcon.send(`whitelist add ${user[0]}`);
+						users.set(userID, ['Java', user[1]]);
+						resolve(`Successfully added ${user[0]} to the whitelist`);
+					}
+					callback();
 				}
 				else {callback();}
 			},
@@ -221,7 +256,7 @@ async function whitelist(arg, username, userID, bedrock){
 						else {
 							getBedUser(curuser[1]).then(
 								(value) => {
-									rcon.send(`whitelist remove ${value}`);
+									rcon.send(`fwhitelist remove ${xuidToFloodUUID(curuser[1])}`);
 									resolve(`Removed ${value} from the whitelist.`);
 									users.delete(userID);
 									callback();
