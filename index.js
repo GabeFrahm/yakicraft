@@ -1,5 +1,5 @@
 const { Client, Intents, MessageEmbed } = require('discord.js');
-const {token, rconPass, rconIP, rconPort, serverIP, updateInterval} = require('./config.json');
+const {token, rconPass, rconIP, rconPort, serverIP, updateInterval, xapiKey} = require('./config.json');
 const async = require('async');
 const Rcon = require('modern-rcon');
 const fs = require('fs');
@@ -60,8 +60,30 @@ async function getUser(user) {
 }
 
 // Bedrock api calls
-async function getBedUser(user) {
-	//TODO
+const XapiOptions = {
+	headers: {
+		'X-AUTH': xapiKey
+	}
+}
+
+async function getBedUser(xuid) {
+	const response = await fetch('https://xapi.us/v2/gamertag/' + xuid, XapiOptions);
+	const responsetext = await response.text();
+	if (responsetext.length == 0) {
+		throw Error('ERR');
+	} else {
+		return(responsetext);
+	}
+}
+
+async function getBedXuid(gamertag) {
+	const response = await fetch('https://xapi.us/v2/xuid/' + gamertag, XapiOptions);
+	const responsetext = await response.text();
+	if (responsetext[0] === '{') {
+		throw Error('ERR');
+	} else {
+		return(responsetext);
+	}
 }
 
 async function whitelist(arg, username, userID, bedrock){
@@ -137,8 +159,43 @@ async function whitelist(arg, username, userID, bedrock){
 							}
 						);
 					} else {
-						// ADDING BEDROCK USER
-						// TODO
+						getBedXuid(username).then(
+							(value) => {
+								user = value;
+								let arr = Array.from(users.values()).filter( (el) => {
+									return !!~el.indexOf( user );
+								});
+
+								if (arr.length != 0 && arr[0] === 'Bedrock') {
+									resolve('That user is already on the whitelist!');
+									exit = true;
+								}
+								else {
+									if (curuser) {
+										users.delete(userID);
+										getUser(curuser[1]).then(
+											(value) => {
+												// REMOVING JAVA USER
+												rcon.send(`whitelist remove ${value[0]}`);
+											},
+											(err) => {
+												// REMOVING BEDROCK USER
+												rcon.send(`fwhitelist remove ${value[0]}`);
+											}
+										);
+									}
+
+									// ADDING BEDROCK USER
+									rcon.send(`fwhitelist add ${username}`);
+									users.set(userID, ['Bedrock', user]);
+									resolve(`Successfully added ${username} to the whitelist`);
+									callback();
+							},
+							(err) => {
+								resolve('That user doesn\'t exist!');
+								exit = true;
+							}
+						)
 					}
 				}
 				else {callback();}
@@ -162,7 +219,14 @@ async function whitelist(arg, username, userID, bedrock){
 						}
 						// BEDROCK REMOVE
 						else {
-							// TODO get bedrock user then mirror method above
+							getBedUser(curuser[1]).then(
+								(value) => {
+									rcon.send(`whitelist remove ${value}`);
+									resolve(`Removed ${value} from the whitelist.`);
+									users.delete(userID);
+									callback();
+								}
+							);
 						}
 					}
 					else {
