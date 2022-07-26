@@ -217,7 +217,7 @@ async function whitelist(arg, username, userID, bedrock){
 			function(callback) {
 				// add new user
 				if (exit) {callback();}
-				if (arg === 'add') {
+				else if (arg === 'add') {
 					if (bedrock) {
 						// ADDING BEDROCK USER
 						// Floodgate UUIDs are slightly different than Xbox XUIDs...
@@ -279,8 +279,11 @@ async function whitelist(arg, username, userID, bedrock){
 	return(message);
 }
 
-// DOESN'T WORK
 async function mcQuery(mcUser) {
+	// NOTE: DOESN'T WORK
+	// not too sure how I want to go about this function. Bedrock users
+	// *typically* have a '.' before their name but not always. I'm not sure how
+	// to go about this optimally... may not even include this function tbh
 	let promise = new Promise((resolve, reject) => {
 		let mcUsers = Array.from(users.values());
 		getUser(mcUser).then(
@@ -315,9 +318,14 @@ async function mcQuery(mcUser) {
 async function userQuery(discordUser) {
 	let promise = new Promise((resolve, reject) => {
 		let mcUUID = users.get(discordUser.id);
-		if (mcUUID) {
+		if (mcUUID && mcUUID[0] === 'Java') {
 			getUser(mcUUID[1]).then(
 				(value) => {resolve(`${mcUUID[0]} user ${(value[0])} is ${discordUser}`);}
+			)
+		}
+		else if (mcUUID && mcUUID[0] === 'Bedrock') {
+			getBedUser(mcUUID[1]).then(
+				(value) => {resolve(`${mcUUID[0]} user ${(value)} is ${discordUser}`);}
 			)
 		}
 		else {
