@@ -1,13 +1,22 @@
+/*
+ * Oh hey Yaki, funny seeing you here.
+ *
+ * Please don't judge my code it works okay :)
+ * There's a lot of code in this project I'm proud of and there's a lot that I'm
+ * not. I plan to continuously optimize and add new features so stay posted on
+ * that!
+ *
+ * Thanks for building such an awesome community. I'm excited to play Minecraft
+ * with you all!
+ *
+ * - Gabe
+ */
+
 const { Client, Intents, MessageEmbed } = require('discord.js');
 const {token, rconPass, rconIP, rconPort, serverIP, updateInterval, xapiKey} = require('./config.json');
 const async = require('async');
 const Rcon = require('modern-rcon');
 const fs = require('fs');
-
-// TODOs
-// TODO: add Geyser/Floodgate support
-// TODO: comment and optimise code
-
 
 let isOnline = false;
 let users = readJson();
@@ -100,6 +109,8 @@ function xuidToFloodUUID(xuid){
 }
 
 async function whitelist(arg, username, userID, bedrock){
+	// TODO: THIS METHOD NEEDS OPTIMIZATION. It's functional, but COULD BE
+	// BETTER!!! (and more readable)
 	// STEP 1: Get current user if it exists
 	let message = new Promise((resolve, reject) => {
 		let curuser = null;
@@ -117,7 +128,7 @@ async function whitelist(arg, username, userID, bedrock){
 						callback();
 					},
 					(error) => {
-						resolve('Server is offline. Try again later');
+						resolve('Server is offline (I blame Ruby). Try again later');
 						exit = true;
 						callback();
 					}
@@ -279,6 +290,7 @@ async function whitelist(arg, username, userID, bedrock){
 	return(message);
 }
 
+/*
 async function mcQuery(mcUser) {
 	// NOTE: DOESN'T WORK
 	// not too sure how I want to go about this function. Bedrock users
@@ -314,6 +326,7 @@ async function mcQuery(mcUser) {
 
 	return(promise);
 }
+*/
 
 async function userQuery(discordUser) {
 	let promise = new Promise((resolve, reject) => {
@@ -404,12 +417,15 @@ client.on('interactionCreate', async interaction => {
 		);
 	} else if (commandName === 'user') {
 		if (options.getSubcommand() === 'mc') {
+			/*
 			await interaction.deferReply({ ephemeral: true });
 			mcQuery(options.getString('username')).then(
 				(value) => {
 					interaction.editReply({content: value, ephemeral: true });
 				}
 			)
+			*/
+			interaction.reply('Todo haha :) (harass Gabe#4478 to do it)');
 		}
 		else {
 			await interaction.deferReply({ ephemeral: true });
