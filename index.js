@@ -138,7 +138,7 @@ async function whitelist(arg, username, userID, bedrock){
 									return !!~el.indexOf( user[1] );
 								});
 
-								if (arr.length != 0 && arr[0] === 'Java') {
+								if (arr.length > 0 && arr[0][0] === 'Java') {
 									resolve('That user is already on the whitelist!');
 									exit = true;
 								}
@@ -177,7 +177,7 @@ async function whitelist(arg, username, userID, bedrock){
 									return !!~el.indexOf( user );
 								});
 
-								if (arr.length != 0 && arr[0] === 'Bedrock') {
+								if (arr.length != 0 && arr[0][0] === 'Bedrock') {
 									resolve('That user is already on the whitelist!');
 									exit = true;
 									callback();
