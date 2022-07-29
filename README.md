@@ -1,2 +1,2 @@
 # yakicraft
-A back and frontend system to automate Minecraft whitelists for Twitch subscribers.
+A back Discord bot to simplify Minecraft whitelists
