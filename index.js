@@ -12,8 +12,8 @@
  * - Gabe
  */
 
-const { Client, Intents, MessageEmbed } = require('discord.js');
-const {token, rconPass, rconIP, rconPort, serverIP, updateInterval, xapiKey} = require('./config.json');
+const { Client, Partials, Intents, MessageEmbed } = require('discord.js');
+const {token, rconPass, rconIP, rconPort, serverIP, updateInterval, xapiKey, allowedRoles} = require('./config.json');
 const async = require('async');
 const Rcon = require('modern-rcon');
 const fs = require('fs');
@@ -350,7 +350,7 @@ async function userQuery(discordUser) {
 	
 
 // Discord Bot
-const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
+const client = new Client({ intents: [Intents.FLAGS.GUILDS, "GUILD_MEMBERS"], partials: ["GUILD_MEMBER"] });
 
 const statusInterval = setInterval(setPresence, updateInterval * 1000);
 function setPresence() {
@@ -383,6 +383,20 @@ function setPresence() {
 client.once('ready', () => {
 	console.log('Ready!');
 	setPresence();
+});
+
+// remove users from whitelist when subs expire
+client.on('guildMemberUpdate', (oldMember, newMember) => {
+	let allowed = false;
+	newMember.roles.cache.forEach( (item) => {
+		if (allowedRoles.includes(item.id)) {
+			allowed = true
+		}
+	});
+
+	if (!allowed) {
+		whitelist('remove', null, newMember.id, null);
+	}
 });
 
 client.on('interactionCreate', async interaction => {
