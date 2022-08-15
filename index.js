@@ -394,6 +394,7 @@ client.on('guildMemberUpdate', (oldMember, newMember) => {
 		}
 	});
 
+	// TODO: Create a queue system for this
 	if (!allowed) {
 		whitelist('remove', null, newMember.id, null);
 	}
@@ -439,7 +440,7 @@ client.on('interactionCreate', async interaction => {
 				}
 			)
 			*/
-			interaction.reply('Todo haha :) (harass Gabe#4478 to do it)');
+			interaction.reply('Todo haha :) (spam @ Gabe#4478 to do it)');
 		}
 		else {
 			await interaction.deferReply({ ephemeral: true });
