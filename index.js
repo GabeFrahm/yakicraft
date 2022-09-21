@@ -1,17 +1,3 @@
-/*
- * Oh hey Yaki, funny seeing you here.
- *
- * Please don't judge my code it works okay :)
- * There's a lot of code in this project I'm proud of and there's a lot that I'm
- * not. I plan to continuously optimize and add new features so stay posted on
- * that!
- *
- * Thanks for building such an awesome community. I'm excited to play Minecraft
- * with you all!
- *
- * - Gabe
- */
-
 const { Client, Partials, Intents, MessageEmbed } = require('discord.js');
 const {token, rconPass, rconIP, rconPort, serverIP, updateInterval, xapiKey, allowedRoles} = require('./config.json');
 const async = require('async');
@@ -289,44 +275,6 @@ async function whitelist(arg, username, userID, bedrock){
 
 	return(message);
 }
-
-/*
-async function mcQuery(mcUser) {
-	// NOTE: DOESN'T WORK
-	// not too sure how I want to go about this function. Bedrock users
-	// *typically* have a '.' before their name but not always. I'm not sure how
-	// to go about this optimally... may not even include this function tbh
-	let promise = new Promise((resolve, reject) => {
-		let mcUsers = Array.from(users.values());
-		getUser(mcUser).then(
-			(value) => {
-				let arr = Array.from(users.values()).filter( (el) => {
-					return !!~el.indexOf( value[1] );
-				});
-				if (arr.length > 0) {
-					// holy one liner batman! returns discord user
-					client.users.fetch([...users.entries()]
-						.filter(({1:v}) => v === arr)
-						.map(([k]) => k)
-					[0]).then(
-						(value) => { resolve(`${value} is Java user ${mcUser}`); }
-					);
-				}
-				else {
-					// CHECK BEDROCK FIRST
-					resolve('That user isn\'t on the whitelist!');
-				}
-			},
-			(error) => {
-				// GET BEDROCK USER
-				resolve('That user doesn\'t exist');
-			}
-		)
-	});
-
-	return(promise);
-}
-*/
 
 async function userQuery(discordUser) {
 	let promise = new Promise((resolve, reject) => {
