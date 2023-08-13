@@ -1,6 +1,6 @@
 # yakicraft
 A Discord bot to simplify Minecraft whitelists
 
-NOTE: THIS CODE IS NOT GOOD. I'M NOT SUPER GREAT AT JS AND I WROTE THIS BEFORE I HAD MY CURRENT STYLE/IMPLEMENTATION STANDARDS.
+Disclaimer: This code was written before I had developed my strict code quality standards. This project has some questionable nesting, questionable usage of asynchronous functions, and questionable style. It is, however, functional and served it's purpose.
 
-ALSO, please do not use the rcon protocol for anything serious... it's unencrypted lol
+Note: Please do not use the rcon protocol for anything serious... it's unencrypted
